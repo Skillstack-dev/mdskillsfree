@@ -1,4 +1,4 @@
-markdown# 🧠 Free MDSkills
+🧠 Free MDSkills
 
 A curated collection of free, open-source agent skills for [mdskill.dev](https://mdskill.dev) — the open directory of AI agent skills.
 
