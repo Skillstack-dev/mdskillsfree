@@ -1,0 +1,112 @@
+{
+  "label": "example_1_simple",
+  "description": "Creating a skill to extract action items from meeting transcripts — a single-domain, extractive use case with clear inputs and outputs.",
+
+  "input": {
+    "skill_name": "meeting-action-extractor",
+    "skill_purpose": "Extract action items, owners, and deadlines from raw meeting transcripts",
+    "use_cases": [
+      "Weekly team standup notes → structured task list",
+      "Client call transcript → follow-up actions with assignees",
+      "Design review session → next steps with due dates"
+    ],
+    "output_format": "JSON",
+    "token_budget": "MEDIUM"
+  },
+
+  "output": {
+    "meta": {
+      "skill_name": "meeting-action-extractor",
+      "version": "1.0.0",
+      "generated_at": "2026-04-11T10:00:00Z",
+      "confidence": 0.94,
+      "token_tier": "MEDIUM",
+      "author": "skill-creator v1.0"
+    },
+
+    "intent": {
+      "purpose": "Extract structured action items with owners and deadlines from unstructured meeting transcripts",
+      "reasoning_type": "EXTRACTIVE",
+      "use_cases": [
+        "Weekly team standup notes → structured task list",
+        "Client call transcript → follow-up actions with assignees",
+        "Design review session → next steps with due dates"
+      ],
+      "output_format": "JSON",
+      "domain": "General / Business",
+      "ambiguities": []
+    },
+
+    "architecture": {
+      "schema_pattern": "Array of typed objects with confidence scores",
+      "trigger_phrases": [
+        "extract action items from",
+        "summarize meeting tasks",
+        "who said they'd do what",
+        "get tasks from transcript",
+        "parse meeting notes"
+      ],
+      "requires_subagents": false,
+      "requires_tools": [],
+      "reuse_components": []
+    },
+
+    "files": {
+      "readme": "# Meeting Action Extractor\n\nExtracts structured action items from meeting transcripts.\n\n## When to use\n- After any meeting where tasks were discussed\n- When you have raw notes and need a clean task list\n\n## When NOT to use\n- For agenda planning (before a meeting)\n- For meeting summarization without task focus",
+
+      "skill_md": "---\nname: meeting-action-extractor\ndescription: >\n  Extracts action items, owners, and deadlines from raw meeting transcripts.\n  Trigger when the user says 'extract tasks from my notes', 'who is doing what',\n  'get action items', or pastes any meeting transcript and asks for a summary.\n---\n\n# Meeting Action Extractor\n\n1. Receive the raw meeting transcript\n2. Identify all commitments, tasks, and action verbs\n3. For each: extract owner (name/role), task description, deadline (if mentioned)\n4. Score confidence for each item\n5. Output as validated JSON",
+
+      "core_prompt": "You are a meeting intelligence agent. Extract all action items from the meeting transcript provided.\n\nSteps:\n1. Read the full transcript before extracting anything.\n2. Identify every sentence where someone commits to doing something.\n3. For each commitment: extract (a) owner name or role, (b) action description ≤20 words, (c) deadline if stated, (d) confidence score 0–1.\n4. Exclude: opinions, questions, general discussion with no commitment.\n5. Output ONLY valid JSON matching the schema. No prose.\n\nConstraints:\n- If owner is unclear, use 'Unassigned'\n- If deadline is unclear, use null\n- Minimum confidence threshold for inclusion: 0.6",
+
+      "output_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["meta", "action_items"],
+        "properties": {
+          "meta": {
+            "type": "object",
+            "properties": {
+              "meeting_date": { "type": "string" },
+              "total_items": { "type": "integer" },
+              "processed_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "action_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "owner", "action", "confidence"],
+              "properties": {
+                "id":          { "type": "integer" },
+                "owner":       { "type": "string" },
+                "action":      { "type": "string" },
+                "deadline":    { "type": ["string", "null"] },
+                "confidence":  { "type": "number", "minimum": 0, "maximum": 1 },
+                "source_quote": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+
+      "token_strategy": "LOW mode: Remove source_quote field, skip meta block. MEDIUM mode: Full output. HIGH mode: Add reasoning chain per item.",
+      "evaluation_rubric": "Correctness (1-5): Are all real commitments captured? Completeness (1-5): Are owner/action/deadline all present? Precision (1-5): Are non-commitments excluded?",
+      "extensions": "Upgrades: (1) Connect to Jira/Asana API to auto-create tasks. (2) Add speaker diarization for better owner attribution. (3) Multi-meeting trend analysis."
+    },
+
+    "evaluation": {
+      "dimensions": [
+        { "name": "Schema Coherence", "score": 5, "justification": "All prompt outputs map to schema fields" },
+        { "name": "Trigger Coverage", "score": 5, "justification": "5 distinct trigger phrases covering multiple phrasings" },
+        { "name": "Example Validity", "score": 5, "justification": "Schema is self-consistent and complete" },
+        { "name": "Token Efficiency", "score": 4, "justification": "Standard MEDIUM tier; LOW mode defined" },
+        { "name": "Reasoning Clarity", "score": 5, "justification": "7-step layered prompt, each step precise" }
+      ],
+      "overall_score": 4.8,
+      "recommendation": "READY",
+      "improvement_notes": [
+        "Consider adding a speaker-to-owner mapping table for large organizations"
+      ]
+    }
+  }
+}

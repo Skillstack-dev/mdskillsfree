@@ -1,0 +1,42 @@
+{
+  "name": "prompt-engineering",
+  "version": "1.0.0",
+  "description": "Transforms raw user input into structured, optimized prompts for LLMs",
+  "author": "Custom Skill",
+  "compatible_agents": ["claude", "chatgpt", "gemini", "openai-compatible"],
+  "complexity": "intermediate",
+  "inputs": {
+    "required": ["raw_request"],
+    "optional": ["target_agent", "domain", "output_type", "existing_prompt"]
+  },
+  "outputs": {
+    "structured_prompt": "string",
+    "prompt_score": "string",
+    "key_changes": "array",
+    "usage_note": "string",
+    "token_delta": "string"
+  },
+  "modules": [
+    "intent",
+    "role",
+    "context",
+    "constraints",
+    "output",
+    "compress",
+    "debug",
+    "chain"
+  ],
+  "domains": ["writing", "coding", "ux", "research", "business"],
+  "trigger_phrases": [
+    "write me a prompt",
+    "help me ask AI to",
+    "my prompt isn't working",
+    "create a system prompt",
+    "improve this prompt",
+    "how do I get Claude/GPT to",
+    "prompt for",
+    "make a prompt that"
+  ],
+  "entry_point": "SKILL.md",
+  "core_engine": "meta-prompt.txt"
+}

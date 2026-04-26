@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://skills.sh/skill-creator/schema.json",
+  "title": "SkillPackage",
+  "description": "Complete output schema for the Skill Creator skill. Every generated skill package must validate against this schema.",
+  "type": "object",
+  "required": [
+    "meta",
+    "intent",
+    "architecture",
+    "files",
+    "evaluation"
+  ],
+  "additionalProperties": false,
+
+  "properties": {
+
+    "meta": {
+      "type": "object",
+      "description": "Package metadata and provenance",
+      "required": ["skill_name", "version", "generated_at", "confidence", "token_tier"],
+      "properties": {
+        "skill_name":    { "type": "string", "description": "kebab-case skill identifier" },
+        "version":       { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Semantic version, e.g. 1.0.0" },
+        "generated_at":  { "type": "string", "format": "date-time" },
+        "confidence":    { "type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Model's confidence in output quality" },
+        "token_tier":    { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "author":        { "type": "string", "description": "Agent or human who created this package" }
+      }
+    },
+
+    "intent": {
+      "type": "object",
+      "description": "Parsed intent from user input (Layer 1 output)",
+      "required": ["purpose", "reasoning_type", "use_cases", "output_format"],
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "description": "Single sentence describing what the skill enables"
+        },
+        "reasoning_type": {
+          "type": "string",
+          "enum": ["EXTRACTIVE", "GENERATIVE", "EVALUATIVE", "DECISION", "HYBRID"],
+          "description": "Primary cognitive pattern this skill uses"
+        },
+        "use_cases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "maxItems": 10,
+          "description": "Concrete scenarios this skill handles"
+        },
+        "output_format": {
+          "type": "string",
+          "enum": ["JSON", "Markdown", "Plain", "Mixed"]
+        },
+        "domain": {
+          "type": "string",
+          "description": "Optional domain specialization (e.g. Legal, Medical, Design)"
+        },
+        "ambiguities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Unresolved questions that need user clarification"
+        }
+      }
+    },
+
+    "architecture": {
+      "type": "object",
+      "description": "Design decisions before file generation (Layer 2 output)",
+      "required": ["schema_pattern", "trigger_phrases"],
+      "properties": {
+        "schema_pattern": {
+          "type": "string",
+          "description": "Structural pattern used for output schema"
+        },
+        "trigger_phrases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 3,
+          "description": "User phrases that should activate this skill"
+        },
+        "requires_subagents": { "type": "boolean", "default": false },
+        "requires_tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "External tools needed (e.g. web_search, calculator, RAG)"
+        },
+        "reuse_components": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Existing skills or modules this skill builds on"
+        }
+      }
+    },
+
+    "files": {
+      "type": "object",
+      "description": "All generated skill files as string content",
+      "required": ["readme", "skill_md", "core_prompt", "output_schema", "examples", "token_strategy", "evaluation_rubric", "extensions"],
+      "properties": {
+
+        "readme": {
+          "type": "string",
+          "description": "Content of README.md — human-readable overview"
+        },
+
+        "skill_md": {
+          "type": "string",
+          "description": "Content of SKILL.md — YAML frontmatter + triggering instructions"
+        },
+
+        "core_prompt": {
+          "type": "string",
+          "description": "Content of core.prompt.md — layered reasoning prompt"
+        },
+
+        "output_schema": {
+          "type": "object",
+          "description": "Parsed JSON Schema object for the skill's outputs"
+        },
+
+        "examples": {
+          "type": "object",
+          "required": ["example_1", "example_2"],
+          "properties": {
+            "example_1": { "$ref": "#/definitions/Example" },
+            "example_2": { "$ref": "#/definitions/Example" }
+          }
+        },
+
+        "token_strategy": {
+          "type": "string",
+          "description": "Content of token.md — optimization strategies"
+        },
+
+        "evaluation_rubric": {
+          "type": "string",
+          "description": "Content of evaluation.md — scoring rubric"
+        },
+
+        "extensions": {
+          "type": "string",
+          "description": "Content of extensions.md — upgrade paths"
+        }
+      }
+    },
+
+    "evaluation": {
+      "type": "object",
+      "description": "Self-assessment of the generated skill package",
+      "required": ["dimensions", "overall_score", "recommendation"],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ScoredDimension" }
+        },
+        "overall_score": {
+          "type": "number",
+          "minimum": 1.0,
+          "maximum": 5.0
+        },
+        "recommendation": {
+          "type": "string",
+          "enum": ["READY", "NEEDS_REVIEW", "INCOMPLETE"]
+        },
+        "improvement_notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+
+  },
+
+  "definitions": {
+
+    "Example": {
+      "type": "object",
+      "required": ["label", "description", "input", "output"],
+      "properties": {
+        "label":       { "type": "string" },
+        "description": { "type": "string" },
+        "input":       { "type": "object" },
+        "output":      { "type": "object" }
+      }
+    },
+
+    "ScoredDimension": {
+      "type": "object",
+      "required": ["name", "score", "justification"],
+      "properties": {
+        "name":          { "type": "string" },
+        "score":         { "type": "integer", "minimum": 1, "maximum": 5 },
+        "justification": { "type": "string" }
+      }
+    }
+
+  }
+}

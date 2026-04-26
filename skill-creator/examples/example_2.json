@@ -1,0 +1,180 @@
+{
+  "label": "example_2_complex",
+  "description": "Creating a hybrid evaluative+generative skill for UX design review — multi-domain (design + accessibility + business), uses external tools, spawns subagents, and produces both scores and recommendations.",
+
+  "input": {
+    "skill_name": "ux-design-reviewer",
+    "skill_purpose": "Evaluate UI/UX designs against usability, accessibility, and business alignment criteria, then generate a prioritized improvement plan",
+    "use_cases": [
+      "Startup founder uploads Figma screenshot for feedback before dev handoff",
+      "Product team wants WCAG 2.1 AA compliance check on a new feature",
+      "Design team needs competitive benchmark comparison",
+      "Agency needs a client-ready design audit PDF",
+      "Solo designer wants to identify the top 3 changes with highest impact"
+    ],
+    "output_format": "Mixed",
+    "constraints": [
+      "Must reference WCAG 2.1 AA as the accessibility standard",
+      "Business alignment score requires product brief as input",
+      "Do not fabricate specific pixel measurements — use qualitative descriptions"
+    ],
+    "token_budget": "HIGH",
+    "domain": "UX Design"
+  },
+
+  "output": {
+    "meta": {
+      "skill_name": "ux-design-reviewer",
+      "version": "1.0.0",
+      "generated_at": "2026-04-11T11:30:00Z",
+      "confidence": 0.91,
+      "token_tier": "HIGH",
+      "author": "skill-creator v1.0"
+    },
+
+    "intent": {
+      "purpose": "Score a UI design across usability, accessibility, and business alignment dimensions, then output a prioritized, actionable improvement roadmap",
+      "reasoning_type": "HYBRID",
+      "use_cases": [
+        "Startup founder uploads Figma screenshot for feedback before dev handoff",
+        "Product team wants WCAG 2.1 AA compliance check on a new feature",
+        "Design team needs competitive benchmark comparison",
+        "Agency needs a client-ready design audit PDF",
+        "Solo designer wants to identify the top 3 changes with highest impact"
+      ],
+      "output_format": "Mixed",
+      "domain": "UX Design",
+      "ambiguities": [
+        "Is a product brief always available, or should the skill work without one?",
+        "Should competitive benchmarking use web search or uploaded references?"
+      ]
+    },
+
+    "architecture": {
+      "schema_pattern": "Scored dimensions object + ranked recommendation list + optional PDF export block",
+      "trigger_phrases": [
+        "review this design",
+        "audit my UI",
+        "check accessibility",
+        "WCAG compliance check",
+        "give me design feedback",
+        "what's wrong with this screen",
+        "evaluate my Figma",
+        "design critique"
+      ],
+      "requires_subagents": true,
+      "requires_tools": ["image_analysis", "web_search", "pdf_generator"],
+      "reuse_components": ["pdf skill", "wcag-reference-database"]
+    },
+
+    "files": {
+      "readme": "# UX Design Reviewer\n\nEvaluates UI designs across usability, accessibility (WCAG 2.1 AA), and business alignment. Produces scored audit + prioritized improvement plan.\n\n## When to use\n- Before developer handoff\n- During design review cycles\n- For client-facing audit reports\n- WCAG compliance verification\n\n## When NOT to use\n- For motion design or animation review\n- When no design artifact is provided\n- For brand identity or logo critique\n\n## Inputs Required\n- Design image (screenshot, Figma export, or URL)\n- Optional: Product brief or user goals\n- Optional: Target audience description\n\n## Output\n- JSON: Dimensional scores + findings\n- Markdown: Prioritized recommendation list\n- Optional: PDF audit report",
+
+      "skill_md": "---\nname: ux-design-reviewer\ndescription: >\n  Evaluates UI/UX designs for usability, accessibility (WCAG 2.1 AA), and business\n  alignment. Triggers on: 'review this design', 'UI audit', 'check accessibility',\n  'evaluate my Figma', 'what's wrong with this screen', 'WCAG check', or whenever\n  the user uploads a screenshot and asks for design feedback. Also trigger if someone\n  pastes a Figma link and asks for critique. Produces scored report + ranked action plan.\ncompatibility:\n  tools: [image_analysis, web_search]\n  optional: [pdf_generator]\n---\n\n# UX Design Reviewer\n\n## Workflow\n\n### Phase 1 — Input Validation\n1. Confirm a design artifact is provided (image, URL, or Figma link)\n2. Extract: screen type (web/mobile/desktop), feature purpose, target audience\n3. If product brief provided → extract user goals and success metrics\n\n### Phase 2 — Multi-Dimensional Analysis\nRun these 5 analyses in order:\n\n1. **Visual Hierarchy** — Is the primary action visually dominant? Is information grouped logically?\n2. **Usability** — Are interactive elements obvious? Is the flow learnable in <5 steps?\n3. **Accessibility** — Check: contrast ratios (WCAG AA ≥ 4.5:1), touch targets (≥ 44px), text alternatives, focus indicators\n4. **Content Clarity** — Are labels unambiguous? Is copy scannable?\n5. **Business Alignment** — (Only if brief provided) Does the design support stated user goals?\n\n### Phase 3 — Prioritized Recommendations\n1. Score each dimension 1–5\n2. Flag Critical (score ≤ 2), Moderate (score = 3), Minor (score = 4–5)\n3. Rank recommendations by: Impact × Effort^-1\n4. Output top 3 as 'Quick Wins', rest as 'Backlog'\n\n### Phase 4 — Output\n- JSON: Full dimensional scores + findings\n- Markdown: Top 3 quick wins + backlog\n- If PDF requested: invoke pdf skill",
+
+      "core_prompt": "You are a senior UX design auditor with expertise in usability, WCAG 2.1 accessibility, and product strategy.\n\nYou have been given a design artifact. Evaluate it rigorously.\n\nSteps:\n1. OBSERVE: Describe what you see — layout, components, color, typography, navigation. Be specific.\n2. ANALYZE across 5 dimensions: visual_hierarchy, usability, accessibility, content_clarity, business_alignment.\n3. SCORE each dimension 1–5 with specific evidence from the design. Never score without evidence.\n4. IDENTIFY findings: For each dimension, list issues with severity (CRITICAL / MODERATE / MINOR).\n5. PRIORITIZE: Rank all issues by Impact ÷ Implementation Effort. Top 3 become Quick Wins.\n6. OUTPUT: Structured JSON matching the schema, then a Markdown improvement plan.\n\nHard Rules:\n- Do not fabricate measurements. Say 'appears low contrast' not 'contrast ratio is 2.1:1' unless measurable.\n- WCAG references must cite the specific success criterion (e.g., SC 1.4.3).\n- If business brief is absent, skip business_alignment or score as null.\n- Minimum 2 specific findings per dimension.\n\nOutput format: JSON block first, then Markdown section labeled '## Improvement Plan'",
+
+      "output_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "UXDesignReview",
+        "type": "object",
+        "required": ["meta", "artifact", "dimensions", "findings", "improvement_plan"],
+        "properties": {
+          "meta": {
+            "type": "object",
+            "properties": {
+              "skill_name": { "type": "string" },
+              "reviewed_at": { "type": "string", "format": "date-time" },
+              "design_type": { "type": "string", "enum": ["web", "mobile", "desktop", "unknown"] },
+              "brief_provided": { "type": "boolean" }
+            }
+          },
+          "artifact": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "screen_type": { "type": "string" },
+              "apparent_purpose": { "type": "string" }
+            }
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "visual_hierarchy":    { "$ref": "#/definitions/DimensionScore" },
+              "usability":           { "$ref": "#/definitions/DimensionScore" },
+              "accessibility":       { "$ref": "#/definitions/DimensionScore" },
+              "content_clarity":     { "$ref": "#/definitions/DimensionScore" },
+              "business_alignment":  { "$ref": "#/definitions/DimensionScore" }
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/Finding" }
+          },
+          "improvement_plan": {
+            "type": "object",
+            "properties": {
+              "quick_wins": { "type": "array", "items": { "$ref": "#/definitions/Recommendation" }, "maxItems": 3 },
+              "backlog": { "type": "array", "items": { "$ref": "#/definitions/Recommendation" } }
+            }
+          },
+          "overall_score": { "type": "number", "minimum": 1.0, "maximum": 5.0 },
+          "recommendation": { "type": "string", "enum": ["SHIP_READY", "NEEDS_REVISION", "MAJOR_REDESIGN"] }
+        },
+        "definitions": {
+          "DimensionScore": {
+            "type": "object",
+            "required": ["score", "summary", "evidence"],
+            "properties": {
+              "score":    { "type": ["integer", "null"], "minimum": 1, "maximum": 5 },
+              "summary":  { "type": "string" },
+              "evidence": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            }
+          },
+          "Finding": {
+            "type": "object",
+            "required": ["dimension", "severity", "description", "wcag_ref"],
+            "properties": {
+              "dimension":   { "type": "string" },
+              "severity":    { "type": "string", "enum": ["CRITICAL", "MODERATE", "MINOR"] },
+              "description": { "type": "string" },
+              "wcag_ref":    { "type": ["string", "null"] }
+            }
+          },
+          "Recommendation": {
+            "type": "object",
+            "required": ["title", "rationale", "effort", "impact"],
+            "properties": {
+              "title":     { "type": "string" },
+              "rationale": { "type": "string" },
+              "effort":    { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+              "impact":    { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+            }
+          }
+        }
+      },
+
+      "token_strategy": "LOW mode: Skip evidence arrays, return only score + top finding per dimension + top 1 recommendation. MEDIUM mode: Full JSON, skip Markdown improvement plan. HIGH mode: Full JSON + Markdown + PDF trigger. Cache the WCAG reference table across calls — it never changes.",
+
+      "evaluation_rubric": "Correctness (1-5): Are WCAG citations accurate? Completeness (1-5): Are all 5 dimensions scored with evidence? Reasoning (1-5): Is prioritization based on Impact/Effort logic? Specificity (1-5): Are findings tied to observable design elements? Actionability (1-5): Can a designer act on each recommendation without follow-up questions?",
+
+      "extensions": "Phase 2 upgrade: Web search integration to pull WCAG success criterion descriptions dynamically. Phase 3: Figma API integration for direct file reading. Phase 4: Multi-screen flow review (not just single screen). Phase 5: Personalization engine that adapts recommendations to designer's experience level."
+    },
+
+    "evaluation": {
+      "dimensions": [
+        { "name": "Schema Coherence", "score": 5, "justification": "Nested schema with $ref definitions, all prompt outputs accounted for" },
+        { "name": "Trigger Coverage", "score": 5, "justification": "8 trigger phrases covering all likely phrasings" },
+        { "name": "Ambiguity Handling", "score": 4, "justification": "2 ambiguities correctly surfaced; could add guidance on resolving them without user input" },
+        { "name": "Token Efficiency", "score": 5, "justification": "3-tier token strategy defined with caching recommendation" },
+        { "name": "Domain Specificity", "score": 5, "justification": "WCAG citations, effort/impact matrix, and designer-appropriate language throughout" }
+      ],
+      "overall_score": 4.8,
+      "recommendation": "READY",
+      "improvement_notes": [
+        "Add a fallback strategy for when no design image is provided (text description mode)",
+        "Consider a 'comparison mode' when two design variants are uploaded"
+      ]
+    }
+  }
+}

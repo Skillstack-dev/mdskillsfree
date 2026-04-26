@@ -1,0 +1,14 @@
+{
+  "name": "decision-making-planning",
+  "version": "1.0.0",
+  "description": "Structured decision-making and planning engine for AI agents and humans",
+  "author": "AI Engineer",
+  "compatibility": ["claude", "gpt-4", "autonomous-agents"],
+  "layers": 3,
+  "token_budget": "low",
+  "domains": ["strategy", "product", "career", "technical", "operations", "startup"],
+  "frameworks": ["decision-matrix", "cost-benefit", "risk-matrix", "expected-value"],
+  "output_format": "structured-markdown",
+  "multi_agent": true,
+  "tags": ["planning", "decisions", "strategy", "reasoning", "trade-offs", "evaluation"]
+}
